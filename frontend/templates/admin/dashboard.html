@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - CouponAI Mission Control</title>
+    <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="/admin" class="logo">Coupon<span>AI</span> <span style="font-size:11px;color:var(--text-muted);margin-left:8px;">ADMIN</span></a>
+            <div class="nav-links">
+                <a href="/app" style="font-size:12px;">User App →</a>
+                <span style="color:var(--text-secondary);font-size:13px;" id="admin-name"></span>
+                <button class="btn btn-ghost" onclick="Auth.clear();location.href='/login'">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div style="padding:8px 14px;color:var(--text-muted);font-size:11px;text-transform:uppercase;font-weight:600;margin-bottom:8px;">Mission Control</div>
+            <a href="#" class="sidebar-link active" data-section="overview"><span>📊</span> Dashboard</a>
+            <a href="#" class="sidebar-link" data-section="users"><span>👥</span> Users</a>
+            <a href="#" class="sidebar-link" data-section="coupons"><span>🎫</span> Coupons</a>
+            <a href="#" class="sidebar-link" data-section="merchants"><span>🏪</span> Merchants</a>
+            <a href="#" class="sidebar-link" data-section="plans"><span>💰</span> Plans</a>
+            <a href="#" class="sidebar-link" data-section="ai"><span>🤖</span> AI Providers</a>
+            <a href="#" class="sidebar-link" data-section="flags"><span>🚩</span> Feature Flags</a>
+            <a href="#" class="sidebar-link" data-section="logs"><span>📋</span> Audit Logs</a>
+            <a href="#" class="sidebar-link" data-section="search"><span>🔍</span> Search Tools</a>
+        </aside>
+
+        <main class="main-content">
+            <!-- Overview -->
+            <div id="section-overview">
+                <h1 style="font-size:28px;font-weight:700;margin-bottom:24px;">Mission Control</h1>
+                <div class="grid grid-4" id="admin-stats"></div>
+                <div style="margin-top:32px;">
+                    <h2 style="font-size:18px;font-weight:600;margin-bottom:16px;">Quick Actions</h2>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <button class="btn btn-primary" onclick="reindex()">🔄 Reindex Search</button>
+                        <button class="btn btn-secondary" onclick="loadSection('users')">👥 Manage Users</button>
+                        <button class="btn btn-secondary" onclick="loadSection('coupons')">🎫 Manage Coupons</button>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Users Section -->
+            <div id="section-users" style="display:none;">
+                <h1 style="font-size:28px;font-weight:700;margin-bottom:24px;">User Management</h1>
+                <div id="users-table"></div>
+            </div>
+
+            <!-- Coupons Section -->
+            <div id="section-coupons" style="display:none;">
+                <h1 style="font-size:28px;font-weight:700;margin-bottom:24px;">Coupon Management</h1>
+                <div id="coupons-table"></div>
+            </div>
+
+            <!-- Merchants Section -->
+            <div id="section-merchants" style="display:none;">
+                <h1 style="font-size:28px;font-weight:700;margin-bottom:24px;">Merchant Center</h1>
+                <div id="merchants-table"></div>
+            </div>
+
+            <!-- Plans Section -->
+            <div id="section-plans" style="display:none;">
+                <h1 style="font-size:28px;font-weight:700;margin-bottom:24px;">Plan Management</h1>
+                <div style="margin-bottom:20px;">
+                    <button class="btn btn-primary" onclick="showCreatePlan()">+ Create Plan</button>
+                </div>
+                <div id="plans-table"></div>
+                <div id="create-plan-form" style="display:none;margin-top:20px;" class="card"></div>
+            </div>
+
+            <!-- AI Section -->
+            <div id="section-ai" style="display:none;">
+                <h1 style="font-size:28px;font-weight:700;margin-bottom:24px;">AI Control Center</h1>
+                <div id="ai-table"></div>
+            </div>
+
+            <!-- Flags Section -->
+            <div id="section-flags" style="display:none;">
+                <h1 style="font-size:28px;font-weight:700;margin-bottom:24px;">Feature Flags</h1>
+                <div id="flags-table"></div>
+            </div>
+
+            <!-- Logs Section -->
+            <div id="section-logs" style="display:none;">
+                <h1 style="font-size:28px;font-weight:700;margin-bottom:24px;">Audit Logs</h1>
+                <div id="logs-table"></div>
+            </div>
+
+            <!-- Search Tools -->
+            <div id="section-search" style="display:none;">
+                <h1 style="font-size:28px;font-weight:700;margin-bottom:24px;">Search Tools</h1>
+                <div style="display:flex;gap:12px;">
+                    <button class="btn btn-primary" onclick="reindex()">Reindex All</button>
+                </div>
+                <p style="margin-top:16px;color:var(--text-secondary);font-size:14px;">Use these tools to manage the search index.</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+    <script>
+        if (!Auth.isLoggedIn() || !Auth.isAdmin()) window.location.href = '/login';
+        document.getElementById('admin-name').textContent = Auth.getUser()?.username || 'Admin';
+
+        // Navigation
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                loadSection(link.dataset.section);
+            });
+        });
+
+        function loadSection(section) {
+            document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
+            document.getElementById(`section-${section}`).style.display = 'block';
+            const loaders = { overview: loadDashboard, users: loadUsers, coupons: loadCoupons, merchants: loadMerchants, plans: loadPlans, ai: loadAI, flags: loadFlags, logs: loadLogs };
+            if (loaders[section]) loaders[section]();
+        }
+
+        async function loadDashboard() {
+            try {
+                const stats = await api.get('/admin/dashboard');
+                document.getElementById('admin-stats').innerHTML = `
+                    <div class="stat-card"><div class="label">Total Users</div><div class="value">${stats.total_users}</div></div>
+                    <div class="stat-card"><div class="label">Total Coupons</div><div class="value">${stats.total_coupons}</div></div>
+                    <div class="stat-card"><div class="label">Active Coupons</div><div class="value">${stats.active_coupons}</div></div>
+                    <div class="stat-card"><div class="label">Merchants</div><div class="value">${stats.total_merchants}</div></div>
+                `;
+            } catch (e) { Toast.error(e.message); }
+        }
+
+
+        async function loadUsers() {
+            const users = await api.get('/admin/users');
+            document.getElementById('users-table').innerHTML = `<div class="table-container"><table>
+                <thead><tr><th>ID</th><th>Email</th><th>Username</th><th>Role</th><th>Active</th><th>Actions</th></tr></thead>
+                <tbody>${users.map(u => `<tr>
+                    <td>${u.id}</td><td>${u.email}</td><td>${u.username}</td>
+                    <td><span class="badge badge-info">${u.role}</span></td>
+                    <td>${u.is_active ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
+                    <td>
+                        <select onchange="updateRole(${u.id}, this.value)" style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);padding:4px 8px;border-radius:4px;font-size:12px;">
+                            <option value="">Change Role</option>
+                            <option value="user">User</option><option value="moderator">Moderator</option>
+                            <option value="analyst">Analyst</option><option value="admin">Admin</option>
+                        </select>
+                    </td>
+                </tr>`).join('')}</tbody>
+            </table></div>`;
+        }
+
+        async function loadCoupons() {
+            const coupons = await api.get('/admin/coupons');
+            document.getElementById('coupons-table').innerHTML = `<div class="table-container"><table>
+                <thead><tr><th>ID</th><th>Title</th><th>Code</th><th>Status</th><th>Confidence</th><th>Actions</th></tr></thead>
+                <tbody>${coupons.map(c => `<tr>
+                    <td>${c.id}</td><td>${c.title?.substring(0,40) || ''}</td><td>${c.code || '-'}</td>
+                    <td><span class="badge badge-${c.status==='active'?'success':'warning'}">${c.status}</span></td>
+                    <td>${Math.round((c.final_confidence||0)*100)}%</td>
+                    <td><button class="btn btn-ghost" style="font-size:11px;" onclick="verifyCoupon(${c.id})">✓ Verify</button></td>
+                </tr>`).join('')}</tbody>
+            </table></div>`;
+        }
+
+        async function loadMerchants() {
+            const merchants = await api.get('/admin/merchants');
+            document.getElementById('merchants-table').innerHTML = `<div class="table-container"><table>
+                <thead><tr><th>ID</th><th>Name</th><th>Status</th><th>Coupons</th><th>Trust</th></tr></thead>
+                <tbody>${merchants.map(m => `<tr>
+                    <td>${m.id}</td><td>${m.name}</td>
+                    <td><span class="badge badge-${m.status==='active'?'success':'warning'}">${m.status}</span></td>
+                    <td>${m.active_coupons}/${m.total_coupons}</td>
+                    <td>${Math.round((m.trust_score||0)*100)}%</td>
+                </tr>`).join('')}</tbody>
+            </table></div>`;
+        }
+
+        async function loadPlans() {
+            const plans = await api.get('/billing/plans', false);
+            document.getElementById('plans-table').innerHTML = `<div class="table-container"><table>
+                <thead><tr><th>Name</th><th>Price</th><th>Interval</th><th>Daily</th><th>Monthly</th></tr></thead>
+                <tbody>${plans.map(p => `<tr>
+                    <td>${p.name}</td><td>$${p.price}</td><td>${p.interval}</td>
+                    <td>${p.searches_per_day || '-'}</td><td>${p.searches_per_month || '-'}</td>
+                </tr>`).join('')}</tbody>
+            </table></div>`;
+        }
+
+        async function loadAI() {
+            try {
+                const providers = await api.get('/admin/ai-providers');
+                document.getElementById('ai-table').innerHTML = `<div class="table-container"><table>
+                    <thead><tr><th>Provider</th><th>Enabled</th><th>Priority</th><th>Model</th><th>Requests</th><th>Failed</th></tr></thead>
+                    <tbody>${providers.map(p => `<tr>
+                        <td style="font-weight:600;">${p.provider_name}</td>
+                        <td>${p.is_enabled ? '<span class="badge badge-success">On</span>' : '<span class="badge badge-error">Off</span>'}</td>
+                        <td>${p.priority}</td><td>${p.model_name}</td>
+                        <td>${p.total_requests}</td><td>${p.failed_requests}</td>
+                    </tr>`).join('')}</tbody>
+                </table></div>`;
+            } catch(e) { document.getElementById('ai-table').innerHTML = '<p style="color:var(--text-muted);">No AI providers configured yet.</p>'; }
+        }
+
+        async function loadFlags() {
+            try {
+                const flags = await api.get('/admin/feature-flags');
+                document.getElementById('flags-table').innerHTML = flags.length ? `<div class="table-container"><table>
+                    <thead><tr><th>Name</th><th>Status</th><th>Description</th><th>Actions</th></tr></thead>
+                    <tbody>${flags.map(f => `<tr>
+                        <td>${f.name}</td>
+                        <td>${f.is_enabled ? '<span class="badge badge-success">Enabled</span>' : '<span class="badge badge-error">Disabled</span>'}</td>
+                        <td style="color:var(--text-muted);font-size:12px;">${f.description || '-'}</td>
+                        <td><button class="btn btn-ghost" style="font-size:11px;" onclick="toggleFlag(${f.id}, ${!f.is_enabled})">${f.is_enabled ? 'Disable' : 'Enable'}</button></td>
+                    </tr>`).join('')}</tbody>
+                </table></div>` : '<p style="color:var(--text-muted);">No feature flags yet.</p>';
+            } catch(e) {}
+        }
+
+        async function loadLogs() {
+            try {
+                const logs = await api.get('/admin/audit-logs');
+                document.getElementById('logs-table').innerHTML = `<div class="table-container"><table>
+                    <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Resource</th><th>IP</th></tr></thead>
+                    <tbody>${logs.map(l => `<tr>
+                        <td style="font-size:12px;">${l.created_at ? new Date(l.created_at).toLocaleString() : ''}</td>
+                        <td>${l.user_id || '-'}</td><td>${l.action}</td>
+                        <td>${l.resource_type} #${l.resource_id || ''}</td><td style="font-size:12px;">${l.ip_address || '-'}</td>
+                    </tr>`).join('')}</tbody>
+                </table></div>`;
+            } catch(e) {}
+        }
+
+        // Actions
+        async function updateRole(userId, role) { if (!role) return; await api.put(`/admin/users/${userId}/role?role=${role}`); Toast.success('Role updated'); loadUsers(); }
+        async function verifyCoupon(id) { await api.put(`/admin/coupons/${id}/verify`); Toast.success('Coupon verified'); loadCoupons(); }
+        async function toggleFlag(id, val) { await api.put(`/admin/feature-flags/${id}?is_enabled=${val}`); Toast.success('Flag toggled'); loadFlags(); }
+        async function reindex() { await api.post('/admin/reindex', {}); Toast.success('Reindex initiated'); }
+
+        function showCreatePlan() {
+            document.getElementById('create-plan-form').style.display = 'block';
+            document.getElementById('create-plan-form').innerHTML = `
+                <h3 style="font-weight:600;margin-bottom:16px;">Create New Plan</h3>
+                <div style="display:grid;gap:12px;">
+                    <input class="input" id="p-name" placeholder="Plan Name">
+                    <input class="input" id="p-slug" placeholder="Slug (e.g. pro-monthly)">
+                    <input class="input" id="p-price" type="number" placeholder="Price (USD)">
+                    <select class="input" id="p-interval"><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="lifetime">Lifetime</option></select>
+                    <input class="input" id="p-daily" type="number" placeholder="Searches per day (optional)">
+                    <input class="input" id="p-monthly" type="number" placeholder="Searches per month (optional)">
+                    <button class="btn btn-primary" onclick="createPlan()">Create</button>
+                </div>`;
+        }
+
+        async function createPlan() {
+            const params = new URLSearchParams({
+                name: document.getElementById('p-name').value,
+                slug: document.getElementById('p-slug').value,
+                price: document.getElementById('p-price').value,
+                interval: document.getElementById('p-interval').value,
+            });
+            const daily = document.getElementById('p-daily').value;
+            const monthly = document.getElementById('p-monthly').value;
+            if (daily) params.set('searches_per_day', daily);
+            if (monthly) params.set('searches_per_month', monthly);
+            await api.post(`/admin/plans?${params.toString()}`, {});
+            Toast.success('Plan created');
+            document.getElementById('create-plan-form').style.display = 'none';
+            loadPlans();
+        }
+
+        // Load dashboard on init
+        loadDashboard();
+    </script>
+</body>
+</html>

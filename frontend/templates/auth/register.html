@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - CouponAI</title>
+    <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
+    <div style="width:100%;max-width:400px;padding:32px;">
+        <div style="text-align:center;margin-bottom:32px;">
+            <a href="/" class="logo" style="font-size:28px;">Coupon<span>AI</span></a>
+            <p style="color:var(--text-secondary);margin-top:8px;font-size:14px;">Create your free account</p>
+        </div>
+        <form id="register-form" onsubmit="handleRegister(event)">
+            <div style="margin-bottom:16px;">
+                <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">Full Name</label>
+                <input type="text" id="full_name" class="input" placeholder="John Doe">
+            </div>
+            <div style="margin-bottom:16px;">
+                <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">Username</label>
+                <input type="text" id="username" class="input" placeholder="johndoe" required minlength="3">
+            </div>
+            <div style="margin-bottom:16px;">
+                <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">Email</label>
+                <input type="email" id="email" class="input" placeholder="you@email.com" required>
+            </div>
+            <div style="margin-bottom:24px;">
+                <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">Password</label>
+                <input type="password" id="password" class="input" placeholder="Min 8 characters" required minlength="8">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;" id="reg-btn">Create Account</button>
+        </form>
+        <p style="text-align:center;margin-top:20px;color:var(--text-muted);font-size:13px;">
+            Already have an account? <a href="/login" style="color:var(--accent);">Sign in</a>
+        </p>
+        <div id="reg-error" style="margin-top:16px;text-align:center;color:var(--error);font-size:13px;display:none;"></div>
+    </div>
+    <script src="/static/js/app.js"></script>
+    <script>
+        async function handleRegister(e) {
+            e.preventDefault();
+            const btn = document.getElementById('reg-btn');
+            const errEl = document.getElementById('reg-error');
+            btn.textContent = 'Creating account...';
+            errEl.style.display = 'none';
+            try {
+                const data = await api.post('/auth/register', {
+                    email: document.getElementById('email').value,
+                    username: document.getElementById('username').value,
+                    password: document.getElementById('password').value,
+                    full_name: document.getElementById('full_name').value || null,
+                }, false);
+                Auth.setAuth(data);
+                window.location.href = '/app';
+            } catch (err) {
+                errEl.textContent = err.message;
+                errEl.style.display = 'block';
+                btn.textContent = 'Create Account';
+            }
+        }
+    </script>
+</body>
+</html>

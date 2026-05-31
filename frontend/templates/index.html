@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CouponAI - AI-Powered Coupon Intelligence</title>
+    <link rel="stylesheet" href="/static/css/app.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config={theme:{extend:{colors:{accent:'#FF7A18'}}}}</script>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="/" class="logo">Coupon<span>AI</span></a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#pricing">Pricing</a>
+                <a href="/login" class="btn btn-ghost">Login</a>
+                <a href="/register" class="btn btn-primary">Get Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Find Every Coupon.<br><span>Powered by AI.</span></h1>
+        <p>Search naturally. Understand typos. Discover the best deals from millions of coupons — all ranked by our AI confidence engine.</p>
+        <div class="search-box">
+            <svg class="search-icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" id="hero-search" placeholder="Try: best amazon coupon today, nike 20% off, hostinger discount..." autocomplete="off">
+            <button class="search-btn" onclick="heroSearch()">Search</button>
+        </div>
+        <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+            <span onclick="setSearch('best amazon coupon')" style="cursor:pointer;padding:6px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:999px;font-size:12px;color:var(--text-secondary);">best amazon coupon</span>
+            <span onclick="setSearch('nike 20% off')" style="cursor:pointer;padding:6px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:999px;font-size:12px;color:var(--text-secondary);">nike 20% off</span>
+            <span onclick="setSearch('hostinger discount')" style="cursor:pointer;padding:6px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:999px;font-size:12px;color:var(--text-secondary);">hostinger discount</span>
+            <span onclick="setSearch('bst vpn deal')" style="cursor:pointer;padding:6px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:999px;font-size:12px;color:var(--text-secondary);">bst vpn deal ✨</span>
+        </div>
+        <div id="search-results" style="max-width:900px;margin:40px auto 0;text-align:left;"></div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="container" style="padding:80px 32px;">
+        <h2 style="text-align:center;font-size:36px;font-weight:700;margin-bottom:48px;">Why CouponAI?</h2>
+        <div class="grid grid-3">
+            <div class="card">
+                <div style="font-size:28px;margin-bottom:12px;">🧠</div>
+                <h3 style="font-size:18px;font-weight:600;margin-bottom:8px;">AI-Powered Search</h3>
+                <p style="color:var(--text-secondary);font-size:14px;">Natural language understanding. Typo correction. Merchant detection. Context-aware results.</p>
+            </div>
+            <div class="card">
+                <div style="font-size:28px;margin-bottom:12px;">⚡</div>
+                <h3 style="font-size:18px;font-weight:600;margin-bottom:8px;">Lightning Fast</h3>
+                <p style="color:var(--text-secondary);font-size:14px;">Pre-indexed data with Meilisearch. Sub-200ms search responses. No scraping during search.</p>
+            </div>
+            <div class="card">
+                <div style="font-size:28px;margin-bottom:12px;">✅</div>
+                <h3 style="font-size:18px;font-weight:600;margin-bottom:8px;">Confidence Scoring</h3>
+                <p style="color:var(--text-secondary);font-size:14px;">Every coupon scored on trust, freshness, success rate, and validity. No more expired codes.</p>
+            </div>
+            <div class="card">
+                <div style="font-size:28px;margin-bottom:12px;">🔄</div>
+                <h3 style="font-size:18px;font-weight:600;margin-bottom:8px;">Multi-Source Discovery</h3>
+                <p style="color:var(--text-secondary);font-size:14px;">Aggregates from official pages, RSS feeds, deal sites, newsletters, and user submissions.</p>
+            </div>
+            <div class="card">
+                <div style="font-size:28px;margin-bottom:12px;">🔒</div>
+                <h3 style="font-size:18px;font-weight:600;margin-bottom:8px;">Enterprise Security</h3>
+                <p style="color:var(--text-secondary);font-size:14px;">JWT auth, RBAC, rate limiting, encrypted data, audit logs. Built for scale.</p>
+            </div>
+            <div class="card">
+                <div style="font-size:28px;margin-bottom:12px;">📊</div>
+                <h3 style="font-size:18px;font-weight:600;margin-bottom:8px;">Analytics</h3>
+                <p style="color:var(--text-secondary);font-size:14px;">Track searches, conversions, popular merchants, and coupon performance in real-time.</p>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Pricing -->
+    <section id="pricing" class="container" style="padding:80px 32px;">
+        <h2 style="text-align:center;font-size:36px;font-weight:700;margin-bottom:16px;">Simple Pricing</h2>
+        <p style="text-align:center;color:var(--text-secondary);margin-bottom:48px;">Start free. Upgrade when you need more.</p>
+        <div class="grid grid-3" style="max-width:1000px;margin:0 auto;">
+            <div class="pricing-card">
+                <h3 style="font-weight:600;font-size:18px;">Free</h3>
+                <div class="price">$0<span>/mo</span></div>
+                <ul class="features">
+                    <li>10 searches per day</li>
+                    <li>Basic search</li>
+                    <li>Save coupons</li>
+                </ul>
+                <a href="/register" class="btn btn-secondary" style="width:100%;justify-content:center;">Get Started</a>
+            </div>
+            <div class="pricing-card featured">
+                <h3 style="font-weight:600;font-size:18px;">Pro</h3>
+                <div class="price">$10<span>/mo</span></div>
+                <ul class="features">
+                    <li>200 searches per month</li>
+                    <li>AI-powered search</li>
+                    <li>Deal alerts</li>
+                    <li>Priority support</li>
+                </ul>
+                <a href="/register" class="btn btn-primary" style="width:100%;justify-content:center;">Start Pro</a>
+            </div>
+            <div class="pricing-card">
+                <h3 style="font-weight:600;font-size:18px;">Elite Yearly</h3>
+                <div class="price">$99<span>/yr</span></div>
+                <ul class="features">
+                    <li>200 searches per day</li>
+                    <li>All Pro features</li>
+                    <li>API access</li>
+                    <li>Custom alerts</li>
+                    <li>Priority support</li>
+                </ul>
+                <a href="/register" class="btn btn-secondary" style="width:100%;justify-content:center;">Go Elite</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="border-top:1px solid var(--border);padding:40px 32px;text-align:center;">
+        <p style="color:var(--text-muted);font-size:13px;">© 2025 CouponAI. AI-Powered Coupon Intelligence Platform.</p>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+    <script>
+        function setSearch(query) {
+            document.getElementById('hero-search').value = query;
+            heroSearch();
+        }
+        async function heroSearch() {
+            const query = document.getElementById('hero-search').value.trim();
+            if (!query) return;
+            const container = document.getElementById('search-results');
+            container.innerHTML = '<div style="text-align:center;padding:40px;"><div class="skeleton" style="width:100%;height:200px;"></div></div>';
+
+            if (!Auth.isLoggedIn()) {
+                // Use quick search for non-authenticated users
+                const data = await Search.quickSearch(query);
+                if (data.hits && data.hits.length > 0) {
+                    container.innerHTML = `
+                        <div style="margin-bottom:16px;color:var(--text-secondary);font-size:13px;">${data.total || data.hits.length} results found</div>
+                        <div class="grid grid-2">${data.hits.map(h => Search.renderCouponCard(h)).join('')}</div>
+                        <div style="text-align:center;margin-top:24px;"><a href="/register" class="btn btn-primary">Sign up for full AI search</a></div>
+                    `;
+                } else {
+                    container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:40px;">No results. Try another query!</p>';
+                }
+                return;
+            }
+
+            const results = await Search.execute(query);
+            if (results) Search.renderResults(results, container);
+        }
+        document.getElementById('hero-search').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') heroSearch();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CouponAI</title>
+    <link rel="stylesheet" href="/static/css/app.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="/" class="logo">Coupon<span>AI</span></a>
+            <div class="nav-links">
+                <span style="color:var(--text-muted);font-size:12px;" id="quota-display"></span>
+                <span style="color:var(--text-secondary);font-size:13px;" id="user-name"></span>
+                <button class="btn btn-ghost" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="#" class="sidebar-link active" data-section="search">
+                <span>🔍</span> AI Search
+            </a>
+            <a href="#" class="sidebar-link" data-section="dashboard">
+                <span>📊</span> Dashboard
+            </a>
+            <a href="#" class="sidebar-link" data-section="saved">
+                <span>💾</span> Saved Coupons
+            </a>
+            <a href="#" class="sidebar-link" data-section="history">
+                <span>📜</span> Search History
+            </a>
+            <a href="#" class="sidebar-link" data-section="billing">
+                <span>💳</span> Billing
+            </a>
+            <a href="#" class="sidebar-link" data-section="profile">
+                <span>👤</span> Profile
+            </a>
+            <div style="margin-top:auto;padding-top:20px;border-top:1px solid var(--border);">
+                <p style="color:var(--text-muted);font-size:11px;padding:8px 14px;">Press Ctrl+K for quick search</p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Search Section (default) -->
+            <div id="section-search">
+                <h1 style="font-size:28px;font-weight:700;margin-bottom:24px;">AI Search</h1>
+                <div class="search-box" style="max-width:100%;">
+                    <svg class="search-icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" id="app-search" placeholder="Search coupons... (e.g. best amazon deal today)" autocomplete="off">
+                    <button class="search-btn" onclick="appSearch()">Search</button>
+                </div>
+                <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+                    <select id="filter-type" class="input" style="width:auto;padding:8px 12px;font-size:13px;">
+                        <option value="">All Types</option>
+                        <option value="code">Codes</option>
+                        <option value="deal">Deals</option>
+                        <option value="cashback">Cashback</option>
+                        <option value="free_shipping">Free Shipping</option>
+                    </select>
+                    <select id="filter-sort" class="input" style="width:auto;padding:8px 12px;font-size:13px;">
+                        <option value="">Relevance</option>
+                        <option value="confidence">Confidence</option>
+                        <option value="discount">Discount</option>
+                        <option value="newest">Newest</option>
+                        <option value="expiry">Expiring Soon</option>
+                    </select>
+                </div>
+                <div id="app-results" style="margin-top:32px;"></div>
+            </div>
+
+
+            <!-- Dashboard Section -->
+            <div id="section-dashboard" style="display:none;">
+                <h1 style="font-size:28px;font-weight:700;margin-bottom:24px;">Dashboard</h1>
+                <div class="grid grid-4" id="user-stats"></div>
+            </div>
+
+            <!-- Saved Coupons Section -->
+            <div id="section-saved" style="display:none;">
+                <h1 style="font-size:28px;font-weight:700;margin-bottom:24px;">Saved Coupons</h1>
+                <div id="saved-list"></div>
+            </div>
+
+            <!-- History Section -->
+            <div id="section-history" style="display:none;">
+                <h1 style="font-size:28px;font-weight:700;margin-bottom:24px;">Search History</h1>
+                <div id="history-list"></div>
+            </div>
+
+            <!-- Billing Section -->
+            <div id="section-billing" style="display:none;">
+                <h1 style="font-size:28px;font-weight:700;margin-bottom:24px;">Billing & Plan</h1>
+                <div id="billing-info"></div>
+                <h2 style="font-size:20px;font-weight:600;margin:32px 0 16px;">Available Plans</h2>
+                <div class="grid grid-3" id="plans-list"></div>
+            </div>
+
+            <!-- Profile Section -->
+            <div id="section-profile" style="display:none;">
+                <h1 style="font-size:28px;font-weight:700;margin-bottom:24px;">Profile</h1>
+                <div class="card" style="max-width:500px;" id="profile-form"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+    <script>
+        // Check auth
+        if (!Auth.isLoggedIn()) window.location.href = '/login';
+        const user = Auth.getUser();
+        document.getElementById('user-name').textContent = user?.username || '';
+
+        // Navigation
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                const section = link.dataset.section;
+                document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
+                document.getElementById(`section-${section}`).style.display = 'block';
+                if (section === 'billing') loadBilling();
+                if (section === 'history') loadHistory();
+                if (section === 'dashboard') loadUserDashboard();
+                if (section === 'profile') loadProfile();
+            });
+        });
+
+        // Search
+        document.getElementById('app-search').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') appSearch();
+        });
+
+        async function appSearch() {
+            const query = document.getElementById('app-search').value.trim();
+            if (!query) return;
+            const container = document.getElementById('app-results');
+            container.innerHTML = '<div class="skeleton" style="height:200px;width:100%;"></div>';
+            const results = await Search.execute(query, {
+                coupon_type: document.getElementById('filter-type').value || null,
+                sort_by: document.getElementById('filter-sort').value || null,
+            });
+            if (results) {
+                Search.renderResults(results, container);
+                document.getElementById('quota-display').textContent =
+                    results.quota_remaining !== null ? `${results.quota_remaining} searches left` : '';
+            }
+        }
+
+        async function loadBilling() {
+            try {
+                const sub = await api.get('/billing/subscription');
+                document.getElementById('billing-info').innerHTML = `
+                    <div class="card">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <p style="color:var(--text-muted);font-size:13px;">Current Plan</p>
+                                <h3 style="font-size:24px;font-weight:700;">${sub.plan_name || 'Free'}</h3>
+                            </div>
+                            <span class="badge badge-success">${sub.status}</span>
+                        </div>
+                        <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div><span style="color:var(--text-muted);font-size:12px;">Today</span><br><strong>${sub.searches_used_today}</strong> searches used</div>
+                            <div><span style="color:var(--text-muted);font-size:12px;">This Month</span><br><strong>${sub.searches_used_month}</strong> searches used</div>
+                        </div>
+                    </div>`;
+                const plans = await api.get('/billing/plans', false);
+                document.getElementById('plans-list').innerHTML = plans.map(p => `
+                    <div class="pricing-card">
+                        <h3 style="font-weight:600;">${p.name}</h3>
+                        <div class="price">$${p.price}<span>/${p.interval === 'yearly' ? 'yr' : 'mo'}</span></div>
+                        <p style="color:var(--text-secondary);font-size:13px;margin:8px 0;">${p.description || ''}</p>
+                        <p style="font-size:12px;color:var(--text-muted);">${p.searches_per_day ? p.searches_per_day + '/day' : p.searches_per_month + '/month'}</p>
+                    </div>`).join('');
+            } catch (e) { Toast.error(e.message); }
+        }
+
+        async function loadHistory() {
+            try {
+                const history = await api.get('/users/search-history');
+                const el = document.getElementById('history-list');
+                if (!history.length) { el.innerHTML = '<p style="color:var(--text-muted);">No search history yet.</p>'; return; }
+                el.innerHTML = `<div class="table-container"><table>
+                    <thead><tr><th>Query</th><th>Results</th><th>Merchant</th><th>Date</th></tr></thead>
+                    <tbody>${history.map(h => `<tr><td>${h.query}</td><td>${h.results_count}</td><td>${h.merchant_detected || '-'}</td><td>${new Date(h.created_at).toLocaleString()}</td></tr>`).join('')}</tbody>
+                </table></div>`;
+            } catch (e) { Toast.error(e.message); }
+        }
+
+        async function loadUserDashboard() {
+            try {
+                const quota = await api.get('/billing/quota');
+                document.getElementById('user-stats').innerHTML = `
+                    <div class="stat-card"><div class="label">Searches Remaining</div><div class="value">${quota.remaining === -1 ? '∞' : quota.remaining}</div></div>
+                    <div class="stat-card"><div class="label">Plan Type</div><div class="value" style="font-size:20px;">${quota.type || 'free'}</div></div>
+                `;
+            } catch (e) {}
+        }
+
+        async function loadProfile() {
+            const u = Auth.getUser();
+            document.getElementById('profile-form').innerHTML = `
+                <div style="margin-bottom:16px;"><label style="color:var(--text-muted);font-size:12px;">Email</label><p>${u.email}</p></div>
+                <div style="margin-bottom:16px;"><label style="color:var(--text-muted);font-size:12px;">Username</label><p>${u.username}</p></div>
+                <div style="margin-bottom:16px;"><label style="color:var(--text-muted);font-size:12px;">Role</label><p>${u.role}</p></div>
+                <div><label style="color:var(--text-muted);font-size:12px;">Referral Code</label><p>${u.referral_code || 'N/A'}</p></div>
+            `;
+        }
+
+        function logout() { Auth.clear(); window.location.href = '/login'; }
+
+        // Load quota on init
+        (async () => {
+            try {
+                const quota = await api.get('/billing/quota');
+                document.getElementById('quota-display').textContent =
+                    quota.remaining === -1 ? 'Unlimited' : `${quota.remaining} searches left`;
+            } catch(e) {}
+        })();
+    </script>
+</body>
+</html>
