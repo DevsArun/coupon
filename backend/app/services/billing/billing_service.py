@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 
 from app.core.config import settings
-from app.models.billing import Plan, Subscription, Payment, Invoice, SubscriptionStatus, PaymentStatus
+from app.models.billing import Plan, Subscription, Payment, Invoice, SubscriptionStatus, PaymentStatus, PlanInterval, PlanStatus
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ class BillingService:
     async def get_plans(self, db: AsyncSession) -> list:
         """Get all active plans."""
         result = await db.execute(
-            select(Plan).where(Plan.status == "active").order_by(Plan.sort_order)
+            select(Plan).where(Plan.status == PlanStatus.ACTIVE).order_by(Plan.sort_order)
         )
         return result.scalars().all()
 
@@ -42,8 +42,8 @@ class BillingService:
                 slug="free",
                 description="Basic free plan with limited searches",
                 price=0,
-                interval="monthly",
-                status="active",
+                interval=PlanInterval.MONTHLY,
+                status=PlanStatus.ACTIVE,
                 searches_per_day=10,
                 searches_per_month=None,
                 is_free=True,
@@ -148,9 +148,9 @@ class BillingService:
         if plan:
             now = datetime.now(timezone.utc)
             ends_at = None
-            if plan.interval == "monthly":
+            if plan.interval == PlanInterval.MONTHLY:
                 ends_at = now + timedelta(days=30)
-            elif plan.interval == "yearly":
+            elif plan.interval == PlanInterval.YEARLY:
                 ends_at = now + timedelta(days=365)
 
             await db.execute(
@@ -162,7 +162,7 @@ class BillingService:
                     payment_provider=payment.payment_provider,
                     starts_at=now,
                     ends_at=ends_at,
-                    is_lifetime=(plan.interval == "lifetime"),
+                    is_lifetime=(plan.interval == PlanInterval.LIFETIME),
                     searches_used_today=0,
                     searches_used_month=0,
                 )

@@ -13,6 +13,9 @@ from app.core.redis import init_redis, close_redis
 from app.api.v1.router import api_router
 from app.middleware.rate_limiter import RateLimitMiddleware
 
+# Import all models so Base.metadata knows about them before create_all
+import app.models  # noqa: F401
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
